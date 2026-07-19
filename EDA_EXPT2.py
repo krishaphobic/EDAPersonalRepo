@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 
+file_path = r"C:\Users\messa\Downloads\Hospital_Patient_Records_encounters.csv"
 def extract_single_user(file_path):
     df = pd.read_csv(file_path)
     
@@ -27,4 +28,4 @@ def extract_single_user(file_path):
     print(f"✅ Created mock user file: '{output_filename}' with {len(user_records)} associated historical logs.")
 
 if __name__ == "__main__":
-    extract_single_user("Hospital_Patient_Records_encounters.csv")
+    extract_single_user(file_path) 
