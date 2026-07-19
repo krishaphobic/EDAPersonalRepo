@@ -1,0 +1,35 @@
+{
+    "user_id": "3de74169-7f67-9304-91d4-757e0f3a14d2",
+    "total_encounters_logged": 877,
+    "financial_summary": {
+        "total_estimated_cost": 819279.19,
+        "total_insurance_coverage": 0.0
+    },
+    "recent_encounters": [
+        {
+            "START": "2011-01-02T09:26:36Z",
+            "ENCOUNTERCLASS": "ambulatory",
+            "DESCRIPTION": "Encounter for problem (procedure)"
+        },
+        {
+            "START": "2011-01-05T12:58:36Z",
+            "ENCOUNTERCLASS": "ambulatory",
+            "DESCRIPTION": "Encounter for problem (procedure)"
+        },
+        {
+            "START": "2011-01-08T16:42:36Z",
+            "ENCOUNTERCLASS": "ambulatory",
+            "DESCRIPTION": "Encounter for problem (procedure)"
+        },
+        {
+            "START": "2011-01-11T20:15:36Z",
+            "ENCOUNTERCLASS": "ambulatory",
+            "DESCRIPTION": "Encounter for problem (procedure)"
+        },
+        {
+            "START": "2011-01-14T22:49:36Z",
+            "ENCOUNTERCLASS": "ambulatory",
+            "DESCRIPTION": "Encounter for problem (procedure)"
+        }
+    ]
+}
