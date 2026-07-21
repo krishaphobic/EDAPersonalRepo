@@ -25,7 +25,7 @@ def extract_single_user(file_path):
     with open(output_filename, 'w') as f:
         json.dump(user_profile, f, indent=4)
         
-    print(f"✅ Created mock user file: '{output_filename}' with {len(user_records)} associated historical logs.")
+    print(f"Created mock user file: '{output_filename}' with {len(user_records)} associated historical logs.")
 
 if __name__ == "__main__":
     extract_single_user(file_path) 
