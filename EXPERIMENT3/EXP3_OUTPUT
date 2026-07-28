@@ -1,3 +1,4 @@
+EXPERIMENT 3.1
 --- 1. dfx.isnull() ---
             store1  store2  store3  store4  store5
 apple        False   False   False   False    True
@@ -143,3 +144,13 @@ mango         18.0
 watermelon    18.0
 oranges        NaN
 Name: store4, dtype: float64
+
+EXPERIMENT 3.2
+    Age   Salary Category  Age_Mean  Salary_Median Category_Mode Category_Const   Age_MICE   Salary_MICE
+0  25.0  50000.0        A      25.0        50000.0             A              A  25.000000  50000.000000
+1   NaN  60000.0        B      30.5        60000.0             B              B  31.766487  60000.000000
+2  30.0      NaN        A      30.0        55000.0             A              A  30.000000  57324.583367
+3  45.0  80000.0      NaN      45.0        80000.0             A        Missing  45.000000  80000.000000
+4  22.0  45000.0        B      22.0        45000.0             B              B  22.000000  45000.000000
+
+X
