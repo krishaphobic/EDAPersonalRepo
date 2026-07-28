@@ -1,0 +1,145 @@
+--- 1. dfx.isnull() ---
+            store1  store2  store3  store4  store5
+apple        False   False   False   False    True
+banana       False   False   False    True    True
+kiwi         False   False   False    True    True
+grapes       False   False   False    True    True
+mango        False   False   False    True    True
+watermelon   False   False   False   False    True
+oranges       True    True    True    True    True
+
+--- 2. dfx.notnull() ---
+            store1  store2  store3  store4  store5
+apple         True    True    True    True   False
+banana        True    True    True   False   False
+kiwi          True    True    True   False   False
+grapes        True    True    True   False   False
+mango         True    True    True   False   False
+watermelon    True    True    True    True   False
+oranges      False   False   False   False   False
+
+--- 3. Missing values per store ---
+store1    1
+store2    1
+store3    1
+store4    5
+store5    7
+dtype: int64
+
+--- 4. Total missing values in DataFrame ---
+15
+
+--- 5. Count of reported (non-NaN) values ---
+store1    6
+store2    6
+store3    6
+store4    2
+store5    0
+dtype: int64
+
+--- Filtering store4 manually ---
+apple         20.0
+watermelon    18.0
+Name: store4, dtype: float64
+
+--- Dropping NaNs from store4 Series ---
+apple         20.0
+watermelon    18.0
+Name: store4, dtype: float64
+
+--- dfx.dropna() (Drops any row with a single NaN) ---
+Empty DataFrame
+Columns: [store1, store2, store3, store4, store5]
+Index: []
+
+--- dfx.dropna(how='all') (Only drops rows that are entirely NaN) ---
+            store1  store2  store3  store4  store5
+apple         15.0    16.0    17.0    20.0     NaN
+banana        18.0    19.0    20.0     NaN     NaN
+kiwi          21.0    22.0    23.0     NaN     NaN
+grapes        24.0    25.0    26.0     NaN     NaN
+mango         27.0    28.0    29.0     NaN     NaN
+watermelon    15.0    16.0    17.0    18.0     NaN
+
+--- dfx.dropna(how='all', axis=1) (Only drops columns that are entirely NaN) ---
+            store1  store2  store3  store4
+apple         15.0    16.0    17.0    20.0
+banana        18.0    19.0    20.0     NaN
+kiwi          21.0    22.0    23.0     NaN
+grapes        24.0    25.0    26.0     NaN
+mango         27.0    28.0    29.0     NaN
+watermelon    15.0    16.0    17.0    18.0
+oranges        NaN     NaN     NaN     NaN
+
+--- dfx.dropna(thresh=5, axis=1) (Keeps columns with at least 5 non-NaNs) ---
+            store1  store2  store3
+apple         15.0    16.0    17.0
+banana        18.0    19.0    20.0
+kiwi          21.0    22.0    23.0
+grapes        24.0    25.0    26.0
+mango         27.0    28.0    29.0
+watermelon    15.0    16.0    17.0
+oranges        NaN     NaN     NaN
+
+--- NumPy vs Pandas Mean Handling ---
+NumPy Mean: 200.0 (using nanmean) or nan (standard)
+Pandas Series Mean: 200.0
+
+--- store4 Operations ---
+Sum: 38.0
+Mean: 19.0
+Cumulative Sum:
+apple         20.0
+banana         NaN
+kiwi           NaN
+grapes         NaN
+mango          NaN
+watermelon    38.0
+oranges        NaN
+Name: store4, dtype: float64
+
+--- Filling all NaNs with 0 ---
+            store1  store2  store3  store4  store5
+apple         15.0    16.0    17.0    20.0     0.0
+banana        18.0    19.0    20.0     0.0     0.0
+kiwi          21.0    22.0    23.0     0.0     0.0
+grapes        24.0    25.0    26.0     0.0     0.0
+mango         27.0    28.0    29.0     0.0     0.0
+watermelon    15.0    16.0    17.0    18.0     0.0
+oranges        0.0     0.0     0.0     0.0     0.0
+
+--- Mean comparison: Original vs Filled ---
+Original dfx.mean():
+store1    20.0
+store2    21.0
+store3    22.0
+store4    19.0
+store5     NaN
+dtype: float64
+Filled dfx.mean():
+store1    17.142857
+store2    18.000000
+store3    18.857143
+store4     5.428571
+store5     0.000000
+dtype: float64
+
+--- Forward Fill (.ffill()) ---
+apple         20.0
+banana        20.0
+kiwi          20.0
+grapes        20.0
+mango         20.0
+watermelon    18.0
+oranges       18.0
+Name: store4, dtype: float64
+
+--- Backward Fill (.bfill()) ---
+apple         20.0
+banana        18.0
+kiwi          18.0
+grapes        18.0
+mango         18.0
+watermelon    18.0
+oranges        NaN
+Name: store4, dtype: float64
