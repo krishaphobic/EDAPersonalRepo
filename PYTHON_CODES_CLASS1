@@ -1,0 +1,104 @@
+#---CODE 1---
+import pandas as pd
+data = {
+    'PATIENT_ID': ['A1', 'B2', 'C3', 'A1'],
+    'BLOOD_PRESSURE':,
+    'STATION': ['ICU', 'ER', 'ICU', 'General']
+}
+df = pd.DataFrame(data)
+
+critical_patients = df[(df['BLOOD_PRESSURE'] > 130) & (df['STATION'] == 'ICU')]
+
+print("Full Database:\n", df, "\n")
+print("Critical ICU Patients:\n", critical_patients)
+
+#---CODE 2---
+import requests
+Url = "https://icanhazdadjoke.com"
+headers = {"Accept": "application/json"}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()  # Parses JSON directly into a Python dictionary
+    print("Joke of the day:", data["joke"])
+else:
+    print("Failed to connect to the server.")
+
+#---CODE 3---
+class Patient:
+    def __init__(self, name, age):
+        self.name = name          # Attribute
+        self.age = age            # Attribute
+        self.vitals = []          # Attribute starting as empty list
+
+    def add_heart_rate(self, bpm):
+        self.vitals.append(bpm)
+
+    def get_status(self):
+        return f"Patient {self.name} ({self.age}yo) | Latest BPM: {self.vitals[-1] if self.vitals else 'No data'}"
+
+patient_1 = Patient("Alice Smith", 34)
+patient_1.add_heart_rate(72)
+
+print(patient_1.get_status())
+
+#---CODE 4---
+file_name = "patient_report.txt"
+
+try:
+    with open(file_name, "r") as file:
+        content = file.read()
+        print("File read successfully:\n", content)
+except FileNotFoundError:
+    print(f"⚠️ Error: The file '{file_name}' does not exist. Creating a placeholder file.")
+    with open(file_name, "w") as file:
+        file.write("New Patient Record Log:\n")
+
+#---CODE 5---
+import random
+
+def play_numberle():
+    secret_number = "".join([str(random.randint(0, 9)) for _ in range(5)])
+    
+    max_attempts = 6
+    print("🔢 Welcome to Numberle (Digit Wordle)!")
+    print("Guess the secret 5-digit number. You have 6 attempts.")
+    print("Clues: G = Correct spot 🟩 | Y = Wrong spot 🟨 | X = Not in number ⬛\n")
+
+    for attempt in range(1, max_attempts + 1):
+        while True:
+            guess = input(f"Attempt {attempt}/{max_attempts} | Enter 5 digits: ").strip()
+            if len(guess) == 5 and guess.isdigit():
+                break
+            print("⚠️ Invalid input. Please enter exactly 5 numbers (0-9).")
+
+        if guess == secret_number:
+            print(f"🎉 Congratulations! You guessed the number {secret_number} in {attempt} attempts!")
+            return
+
+        clues = ["X"] * 5
+        secret_remaining = list(secret_number)
+        guess_remaining = list(guess)
+
+        for i in range(5):
+            if guess[i] == secret_number[i]:
+                clues[i] = "G"
+                secret_remaining[i] = None  # Consume the digit
+                guess_remaining[i] = None
+
+        for i in range(5):
+            if guess_remaining[i] is not None:
+                digit = guess_remaining[i]
+                if digit in secret_remaining:
+                    clues[i] = "Y"
+                    secret_remaining[secret_remaining.index(digit)] = None  # Consume one matching digit
+
+        print(f"Feedback : {' '.join(clues)}")
+        print("-" * 35)
+
+    print(f"💀 Game Over! The secret number was {secret_number}.")
+
+if __name__ == "__main__":
+    play_numberle()
+
