@@ -1,0 +1,168 @@
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import fetch_openml
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# ==========================================
+# PART A: Data Understanding & Preprocessing
+# ==========================================
+print("--- Part A: Fetching and Preprocessing MNIST ---")
+# Load data from OpenML (Subsetted for computation efficiency)
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True, as_frame=False, parser='auto')
+X_subset, _, y_subset, _ = train_test_split(X, y, train_size=10000, stratify=y, random_state=42)
+
+# Display Structural Parameters
+n_samples, n_features = X_subset.shape
+n_classes = len(np.unique(y_subset))
+image_dim = int(np.sqrt(n_features))
+
+print(f"Number of samples (subset): {n_samples}")
+print(f"Number of classes: {n_classes}")
+print(f"Image dimensions: {image_dim}x{image_dim} pixels ({n_features} total features)")
+
+# Normalize pixel features to the range [0, 1]
+X_normalized = X_subset / 255.0
+
+# Visualize 10 sample images
+fig, axes = plt.subplots(1, 10, figsize=(12, 3))
+for i in range(10):
+    axes[i].imshow(X_normalized[i].reshape(28, 28), cmap='gray')
+    axes[i].set_title(f"Digit: {y_subset[i]}")
+    axes[i].axis('off')
+plt.suptitle("Sample Handwritten Digits from MNIST Subset", y=1.05)
+plt.show()
+
+
+# ==========================================
+# PART B: Principal Component Analysis (PCA)
+# ==========================================
+print("\n--- Part B: Executing Principal Component Analysis ---")
+pca_full = PCA(random_state=42)
+pca_full.fit(X_normalized)
+
+cumulative_variance = np.cumsum(pca_full.explained_variance_ratio_)
+
+# Determine components needed for specific variance targets
+components_90 = np.argmax(cumulative_variance >= 0.90) + 1
+components_95 = np.argmax(cumulative_variance >= 0.95) + 1
+components_99 = np.argmax(cumulative_variance >= 0.99) + 1
+
+print(f"Components required to retain 90% variance: {components_90}")
+print(f"Components required to retain 95% variance: {components_95}")
+print(f"Components required to retain 99% variance: {components_99}")
+
+# 1. Plot: Cumulative Explained Variance Plot
+plt.figure(figsize=(8, 4))
+plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='.', linestyle='-', color='teal')
+plt.axhline(y=0.95, color='r', linestyle='--', label=f'95% Variance ({components_95} components)')
+plt.xlabel('Number of Components')
+plt.ylabel('Cumulative Explained Variance')
+plt.title('PCA: Cumulative Explained Variance Plot')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 2. Plot: Scree Plot (First 50 Components)
+plt.figure(figsize=(8, 4))
+plt.bar(range(1, 51), pca_full.explained_variance_ratio_[:50], color='indigo', alpha=0.7)
+plt.xlabel('Principal Component Index')
+plt.ylabel('Individual Variance Explained')
+plt.title('Scree Plot: Individual Variance (Top 50 Components)')
+plt.grid(True, alpha=0.3)
+plt.show()
+
+# Reduce dataset to 2D and 50D
+X_pca_2d = PCA(n_components=2, random_state=42).fit_transform(X_normalized)
+X_pca_50 = PCA(n_components=50, random_state=42).fit_transform(X_normalized)
+
+# 3. Plot: 2D PCA Projection
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=X_pca_2d[:, 0], y=X_pca_2d[:, 1], hue=y_subset.astype(int), 
+                palette='tab10', alpha=0.6, legend='full')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('MNIST 2D PCA Projection')
+plt.legend(title="Digit Class", bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.grid(True, alpha=0.3)
+plt.show()
+
+
+# ==========================================
+# PART C: t-SNE Visualization
+# ==========================================
+print("\n--- Part C: Generating t-SNE Projections ---")
+# Warning: Running t-SNE on raw 784D data takes considerably longer than 50D data
+print("Calculating t-SNE directly on original 784D data...")
+t0 = time.time()
+tsne_raw = TSNE(n_components=2, perplexity=30, random_state=42, n_jobs=-1)
+X_tsne_raw = tsne_raw.fit_transform(X_normalized)
+print(f"t-SNE raw data time: {time.time() - t0:.2f}s")
+
+# Experimenting with different perplexities on PCA-reduced data (50D)
+perplexities = [5, 30, 100]
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+for idx, perp in enumerate(perplexities):
+    print(f"Calculating t-SNE (PCA-50D) with Perplexity = {perp}...")
+    t0 = time.time()
+    tsne_pca = TSNE(n_components=2, perplexity=perp, random_state=42, n_jobs=-1)
+    X_tsne_pca = tsne_pca.fit_transform(X_pca_50)
+    
+    sns.scatterplot(x=X_tsne_pca[:, 0], y=X_tsne_pca[:, 1], hue=y_subset.astype(int), 
+                    palette='tab10', alpha=0.6, ax=axes[idx], legend=(idx == 2))
+    axes[idx].set_title(f"t-SNE (PCA 50D) - Perplexity: {perp}")
+    axes[idx].grid(True, alpha=0.3)
+
+plt.legend(title="Digit Class", bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
+
+
+# ==========================================
+# PART D: Digit Recognition Analysis
+# ==========================================
+print("\n--- Part D: Training and Evaluating Classifiers ---")
+# Train-Test Split (80% Train, 20% Test)
+X_train_raw, X_test_raw, y_train, y_test = train_test_split(X_normalized, y_subset, test_size=0.2, random_state=42)
+X_train_pca, X_test_pca, _, _ = train_test_split(X_pca_50, y_subset, test_size=0.2, random_state=42)
+
+# 1. Evaluate Model on Original 784-Dimensional Space
+clf_raw = KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
+
+t_start = time.time()
+clf_raw.fit(X_train_raw, y_train)
+train_time_raw = time.time() - t_start
+
+t_start = time.time()
+preds_raw = clf_raw.predict(X_test_raw)
+pred_time_raw = time.time() - t_start
+acc_raw = accuracy_score(y_test, preds_raw)
+
+# 2. Evaluate Model on PCA-Reduced 50-Dimensional Space
+clf_pca = KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
+
+t_start = time.time()
+clf_pca.fit(X_train_pca, y_train)
+train_time_pca = time.time() - t_start
+
+t_start = time.time()
+preds_pca = clf_pca.predict(X_test_pca)
+pred_time_pca = time.time() - t_start
+acc_pca = accuracy_score(y_test, preds_pca)
+
+# Performance Breakdown
+print("\n" + "="*50 + "\nDIMENSIONALITY RECOGNITION METRIC COMPARISON\n" + "="*50)
+print(f"{'Metric':<25} | {'Original Space (784D)':<22} | {'PCA Reduced Space (50D)':<22}")
+print("-"*75)
+print(f"{'Dimensions':<25} | {784:<22} | {50:<22}")
+print(f"{'Classification Accuracy':<25} | {acc_raw*100:.2f}%{'':<17} | {acc_pca*100:.2f}%{'':<17}")
+print(f"{'Training Time (s)':<25} | {train_time_raw:.4f}s{'':<15} | {train_time_pca:.4f}s{'':<15}")
+print(f"{'Prediction Inference Time (s)':<25} | {pred_time_raw:.4f}s{'':<15} | {pred_time_pca:.4f}s{'':<15}")
+print("="*50)
