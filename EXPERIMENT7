@@ -1,5 +1,5 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
@@ -7,120 +7,105 @@ from wordcloud import WordCloud
 from scipy.cluster.hierarchy import dendrogram, linkage
 from pandas.plotting import parallel_coordinates, andrews_curves
 
-# Create a synthetic dataset
-np.random.seed(42)
-n_samples = 100
+# 1. Load the dataset (replace string path with your filename if needed)
+# df = pd.read_csv('winqt.csv')
+# Using the uploaded snippet representation:
+df = pd.read_csv("winqt.csv") 
 
-data = {
-    'Age': np.random.randint(18, 65, size=n_samples),
-    'Income': np.random.normal(55000, 15000, size=n_samples).round(2),
-    'Spending_Score': np.random.randint(1, 100, size=n_samples),
-    'Education_Level': np.random.choice(['High School', 'Bachelor', 'Master', 'PhD'], size=n_samples, p=[0.3, 0.4, 0.2, 0.1]),
-    'Satisfied': np.random.choice(['Yes', 'No'], size=n_samples, p=[0.6, 0.4])
-}
-df = pd.DataFrame(data)
-
-# --- Pie Chart ---
+# --- Pie Chart (Quality Proportions) ---
 def plot_pie(data, labels, title="Pie Chart"):
     plt.figure(figsize=(6, 6))
     plt.pie(data, labels=labels, autopct='%1.1f%%', startangle=140, colors=sns.color_palette("pastel"))
     plt.title(title)
     plt.show()
 
-edu_counts = df['Education_Level'].value_counts()
-plot_pie(edu_counts.values, edu_counts.index, title="Education Level Proportions")
+quality_counts = df['quality'].value_counts()
+plot_pie(quality_counts.values, quality_counts.index.astype(str), title="Wine Quality Rating Proportions")
 
-# --- Bar Chart ---
+# --- Bar Chart (Wine Count by Quality) ---
 def plot_bar(categories, values, title="Bar Chart"):
     plt.figure(figsize=(8, 5))
-    sns.barplot(x=categories, y=values, palette="muted")
+    sns.barplot(x=categories, y=values, palette="muted", hue=categories, legend=False)
     plt.title(title)
-    plt.xlabel("Categories")
-    plt.ylabel("Values")
+    plt.xlabel("Quality Grade")
+    plt.ylabel("Number of Wines")
     plt.show()
 
-sat_counts = df['Satisfied'].value_counts()
-plot_bar(sat_counts.index, sat_counts.values, title="Customer Satisfaction Counts")
+plot_bar(quality_counts.index.astype(str), quality_counts.values, title="Wine Count by Quality Score")
 
-# --- Histogram ---
+# --- Histogram (Alcohol Content Distribution) ---
 def plot_histogram(df, column):
     plt.figure(figsize=(8, 5))
     sns.histplot(df[column], kde=True, color="skyblue")
-    plt.title(f"Histogram of {column}")
+    plt.title(f"Distribution Baseline: Histogram of {column}")
     plt.xlabel(column)
     plt.ylabel("Frequency")
     plt.show()
 
-plot_histogram(df, 'Age')
+plot_histogram(df, 'alcohol')
 
-# --- Scatter Plot ---
+# --- Scatter Plot (Fixed Acidity vs pH) ---
 plt.figure(figsize=(8, 5))
-plt.scatter(df['Age'], df['Income'], color='purple', alpha=0.7, edgecolors='black')
-plt.title("Scatter Plot: Age vs Income")
-plt.xlabel("Age")
-plt.ylabel("Income")
+plt.scatter(df['fixed acidity'], df['pH'], color='purple', alpha=0.7, edgecolors='black')
+plt.title("Scatter Plot: Fixed Acidity vs pH")
+plt.xlabel("Fixed Acidity")
+plt.ylabel("pH Balance")
 plt.show()
 
 # --- Correlation Heatmap ---
+plt.figure(figsize=(10, 8))
+# Dropping ID column as it contains arbitrary indices
+sns.heatmap(df.drop(columns=['Id'], errors='ignore').corr(), annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Matrix Matrix of Wine Attributes")
+plt.show()
+
+# --- Pair Plot (Grouped by Quality) ---
+# Selecting a subset of major components for pair-plot clarity
+subset_cols = ['fixed acidity', 'volatile acidity', 'alcohol', 'quality']
+sns.pairplot(df[subset_cols], hue='quality', palette='Set1')
+plt.suptitle("Pair Plot Matrix Grouped by Wine Quality", y=1.02)
+plt.show()
+
+# --- General Heat Map (Avg Alcohol by Quality and Acidity brackets) ---
 plt.figure(figsize=(8, 5))
-sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', fmt=".2f")
-plt.title("Correlation Heatmap")
+# Create dummy bracket segments for matrix comparison structure
+df['Acidity_Type'] = pd.qcut(df['fixed acidity'], q=3, labels=['Low Acid', 'Med Acid', 'High Acid'])
+pivot_table = df.pivot_table(values='alcohol', index='Acidity_Type', columns='quality', aggfunc='mean')
+sns.heatmap(pivot_table, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Heat Map: Avg Alcohol Content by Acidity Type & Quality")
 plt.show()
 
-# --- Pair Plot ---
-# Automatically builds grids of histograms and scatter plots across the dataframe
-sns.pairplot(df, hue='Satisfied', palette='Set1')
-plt.suptitle("Pair Plot grouped by Satisfaction", y=1.02)
-plt.show()
-
-# --- General Heat Map (Pivot or Aggregated Data Matrix) ---
-plt.figure(figsize=(8, 5))
-pivot_table = df.pivot_table(values='Spending_Score', index='Education_Level', columns='Satisfied', aggfunc='mean')
-sns.heatmap(pivot_table, annot=True, cmap='coolwarm')
-plt.title("Heat Map: Avg Spending Score by Education & Satisfaction")
-plt.show()
-
-# --- Word Cloud ---
-# Generate dummy feedback text based on categorical distributions
-text_data = " ".join((df['Education_Level'] + " ") * 3 + (df['Satisfied'] + " "))
+# --- Word Cloud (Textual Quality Visualizer) ---
+# Simulating a string cloud matching the quality distribution ratios
+text_data = " ".join([f"Quality_{q} " * count for q, count in quality_counts.items()])
 wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text_data)
 
 plt.figure(figsize=(10, 5))
 plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
-plt.title("Word Cloud of Categorical Attributes")
+plt.title("Word Cloud Distribution of Quality Rankings")
 plt.show()
 
-# --- Choropleth Map ---
-# Creating dummy geographical data for mapping
-geo_data = pd.DataFrame({
-    'State_Code': ['CA', 'TX', 'NY', 'FL', 'IL'],
-    'Value': [100, 85, 70, 60, 45]
-})
-fig = px.choropleth(geo_data, locations='State_Code', locationmode="USA-states",
-                    color='Value', scope="usa", title="Choropleth Map Example")
-fig.show()
-
-# --- Dendrogram ---
-# Select only continuous fields for clustering distance matrix evaluation
-numeric_df = df[['Age', 'Income', 'Spending_Score']].head(15)  # Sampled first 15 for visualization clarity
+# --- Dendrogram (Hierarchical Clustering Matrix) ---
+# Sampling the first 15 records for visualization framework accuracy
+numeric_df = df[['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 'pH', 'alcohol']].head(15)
 linked = linkage(numeric_df, 'single')
 
 plt.figure(figsize=(10, 5))
 dendrogram(linked, labels=numeric_df.index.tolist())
-plt.title("Dendrogram (Hierarchical Clustering Sample)")
+plt.title("Hierarchical Cluster Dendrogram (Sample Sample Matrix)")
 plt.show()
 
 # --- Parallel Coordinate Plot ---
 plt.figure(figsize=(10, 5))
-parallel_coordinates(df[['Age', 'Income', 'Spending_Score', 'Satisfied']], 'Satisfied', color=('#E74C3C', '#3498DB'))
-plt.title("Parallel Coordinate Plot")
+# Using standard features normalizations for visual legibility
+features_to_plot = ['fixed acidity', 'volatile acidity', 'pH', 'alcohol', 'quality']
+parallel_coordinates(df[features_to_plot], 'quality', color=sns.color_palette("Set1", len(quality_counts)))
+plt.title("Parallel Coordinate Plot Layout")
 plt.show()
 
-# --- Andrews Curves ---
+# --- Andrews Curves Plot ---
 plt.figure(figsize=(10, 5))
-andrews_curves(df[['Age', 'Income', 'Spending_Score', 'Satisfied']], 'Satisfied', color=('#E74C3C', '#3498DB'))
-plt.title("Andrews Curves Plot")
+andrews_curves(df[features_to_plot], 'quality', color=sns.color_palette("Set1", len(quality_counts)))
+plt.title("Andrews Curves Geometries Plot")
 plt.show()
-
-
