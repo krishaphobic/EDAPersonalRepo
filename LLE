@@ -1,0 +1,88 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import LocallyLinearEmbedding
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+# =====================================================================
+# SUBPART 1: Load Data from CSV & Separate Features/Labels
+# =====================================================================
+# (Assuming your quiz provides a CSV file, e.g., 'data.csv' with a 'target' column)
+# df = pd.read_csv('data.csv')
+# X = df.drop(columns=['target']).values
+# y = df['target'].values
+
+# For demonstration, we'll simulate loading using sklearn digits:
+from sklearn.datasets import load_digits
+digits = load_digits()
+X, y = digits.data, digits.target
+
+print(f"Original data shape: {X.shape}")
+
+
+# =====================================================================
+# SUBPART 2: Preprocessing (Scaling)
+# =====================================================================
+# Quiz Rule: LLE relies on neighborhood distance calculations; scaling is essential.
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+# =====================================================================
+# SUBPART 3: Pre-reduction with PCA (Best Practice for LLE)
+# =====================================================================
+# Quiz Question: "Reduce data dimensions using PCA before applying LLE"
+# Why? High-dimensional data can cause covariance matrices to become singular 
+# (ill-conditioned) in LLE, leading to numerical errors. PCA fixes this.
+pca = PCA(n_components=30, random_state=42)
+X_pca = pca.fit_transform(X_scaled)
+print(f"Shape after PCA reduction: {X_pca.shape}")
+
+
+# =====================================================================
+# SUBPART 4: Fitting LLE and Inspecting Attributes
+# =====================================================================
+lle = LocallyLinearEmbedding(
+    n_components=2,           # Target dimensionality (usually 2 for 2D visualization)
+    n_neighbors=30,           # Number of neighbors to consider for local linear fits
+    method='standard',        # Methods: 'standard', 'hessian', 'modified', 'ltsa'
+    reg=1e-3,                 # Regularization parameter (helps avoid singular matrices)
+    random_state=42
+)
+
+X_embedded = lle.fit_transform(X_pca)
+
+print(f"Final LLE embedding shape: {X_embedded.shape}")
+print(f"Reconstruction Error: {lle.reconstruction_error_:.6f}")
+
+
+# =====================================================================
+# SUBPART 5: Comparative Plotting (Testing Different Neighborhood Sizes)
+# =====================================================================
+# Quiz Question: "Plot 2D graphs comparing different n_neighbors values (e.g., 10, 30, 50)"
+# This mirrors the perplexity subplots in t-SNE or the n_components subplots in PCA.
+
+neighbor_values = [10, 30, 50]
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+for ax, n_neigh in zip(axes, neighbor_values):
+    # Initialize and fit LLE with current n_neighbors
+    lle_model = LocallyLinearEmbedding(
+        n_components=2, 
+        n_neighbors=n_neigh, 
+        method='standard', 
+        random_state=42
+    )
+    embedding = lle_model.fit_transform(X_pca)
+    
+    # Scatter plot
+    scatter = ax.scatter(embedding[:, 0], embedding[:, 1], c=y, cmap='tab10', alpha=0.7, s=15)
+    ax.set_title(f'n_neighbors = {n_neigh}\nError: {lle_model.reconstruction_error_:.2e}')
+    ax.set_xlabel('Dim 1')
+    ax.set_ylabel('Dim 2')
+    ax.grid(True, linestyle='--', alpha=0.5)
+
+plt.suptitle('Comparison of LLE Embeddings Across n_neighbors Values', fontsize=14)
+plt.tight_layout()
+plt.show()
