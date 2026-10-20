@@ -1,0 +1,75 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+# =====================================================================
+# SUBPART 1: Load Data from CSV & Separate Features/Labels
+# =====================================================================
+# (Assuming your quiz provides a CSV file, e.g., 'data.csv' with a 'target' column)
+# df = pd.read_csv('data.csv')
+# X = df.drop(columns=['target']).values
+# y = df['target'].values
+
+# For demonstration, we'll simulate loading from a CSV using numpy/sklearn:
+from sklearn.datasets import load_digits
+digits = load_digits()
+X, y = digits.data, digits.target
+
+# Check shape before processing
+print(f"Original data shape: {X.shape}")
+
+
+# =====================================================================
+# SUBPART 2: Preprocessing (Scaling)
+# =====================================================================
+# Quiz Rule: t-SNE is distance-based (Euclidean), so features must be scaled!
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+# =====================================================================
+# SUBPART 3: Pre-reduction with PCA (Best Practice before t-SNE)
+# =====================================================================
+# Quiz Question: "Reduce data to 50 dimensions using PCA before running t-SNE"
+pca = PCA(n_components=50, random_state=42)
+X_pca = pca.fit_transform(X_scaled)
+print(f"Shape after PCA reduction: {X_pca.shape}")
+
+
+# =====================================================================
+# SUBPART 4: Fitting t-SNE and Inspecting Attributes
+# =====================================================================
+tsne = TSNE(n_components=2, perplexity=30, learning_rate='auto', init='pca', random_state=42)
+X_embedded = tsne.fit_transform(X_pca)
+
+print(f"Final t-SNE embedding shape: {X_embedded.shape}")
+print(f"Final KL Divergence: {tsne.kl_divergence_:.4f}")
+
+
+# =====================================================================
+# SUBPART 5: Comparative Plotting (Testing Different Perplexities)
+# =====================================================================
+# Quiz Question often asks: "Plot 2D graphs comparing different perplexity values (e.g., 5, 30, 50)"
+# This is analogous to comparing 50D vs 20D in PCA!
+
+perplexities = [5, 30, 50]
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+for ax, perp in zip(axes, perplexities):
+    # Initialize and fit t-SNE with current perplexity
+    tsne_model = TSNE(n_components=2, perplexity=perp, learning_rate='auto', init='pca', random_state=42)
+    embedding = tsne_model.fit_transform(X_pca)
+    
+    # Scatter plot
+    scatter = ax.scatter(embedding[:, 0], embedding[:, 1], c=y, cmap='tab10', alpha=0.7, s=10)
+    ax.set_title(f'Perplexity = {perp}\nKL Div: {tsne_model.kl_divergence_:.2f}')
+    ax.set_xlabel('Dim 1')
+    ax.set_ylabel('Dim 2')
+    ax.grid(True, linestyle='--', alpha=0.5)
+
+plt.suptitle('Comparison of t-SNE Embeddings Across Perplexity Values', fontsize=14)
+plt.tight_layout()
+plt.show()
